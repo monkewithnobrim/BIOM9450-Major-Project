@@ -1,8 +1,8 @@
 <?php
-// Shared database connection. Settings come from config.local.php.
-$configFile = __DIR__ . '/config.local.php';
+// Shared database connection. Settings come from config_local.php.
+$configFile = __DIR__ . '/config_local.php';
 if (!file_exists($configFile)) {
-    die('Missing config.local.php. Copy config.example.php to config.local.php and edit it.');
+    die('Missing config_local.php. Copy config_example.php to config_local.php and edit it.');
 }
 $config = require $configFile;
 
