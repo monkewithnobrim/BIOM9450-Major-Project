@@ -30,8 +30,9 @@ if ($errorMessage === '') {
     try {
         if ($search === '') {
             //browse query: retrieve all patients when the search is empty
+            //patient photo data: retrieve each patient's stored photo path with their details
             $sql = 'SELECT patient_id, first_name, last_name,
-                           date_of_birth, gender, room, admission_date
+                    date_of_birth, gender, room, admission_date, photo_path
                     FROM patient
                     ORDER BY last_name, first_name, patient_id';
 
@@ -40,8 +41,9 @@ if ($errorMessage === '') {
         } else {
             //search query: match names or rooms containing the search text
             //patient IDs must match the complete search value
+            //patient photo data: retrieve each patient's stored photo path with their details
             $sql = 'SELECT patient_id, first_name, last_name,
-                           date_of_birth, gender, room, admission_date
+                    date_of_birth, gender, room, admission_date, photo_path
                     FROM patient
                     WHERE LOCATE(?, first_name) > 0
                        OR LOCATE(?, last_name) > 0
@@ -181,6 +183,8 @@ if ($errorMessage === '') {
                             <th scope="col">Gender</th>
                             <th scope="col">Room</th>
                             <th scope="col">Admission date</th>
+                            <!--patient photo column: identify the image displayed for each patient-->
+                            <th scope="col">Photo</th>
                             <!--provide access to editing a patient-->
                             <th scope="col">Actions</th>
                         </tr>
@@ -198,6 +202,47 @@ if ($errorMessage === '') {
                                 <td><?= escapeHtml($patient['room']) ?></td>
                                 <td><?= escapeHtml($patient['admission_date']) ?></td>
                                 <!--edit action: send the selected patient's ID to the edit page-->
+                                <!--patient photo: check that the stored path points to an existing local image-->
+                                <td>
+                                    <?php
+                                    //photo path: read the database value and locate the actual file
+                                    $photoPath = $patient['photo_path'] ?? '';
+                                    $photoFile = $photoPath !== ''
+                                        ? realpath(__DIR__ . '/' . $photoPath)
+                                        : false;
+
+                                    //allowed folders: support preloaded photos and photos uploaded through the form
+                                    $photoFolders = [
+                                        realpath(__DIR__ . '/photos'),
+                                        realpath(__DIR__ . '/patient_photos'),
+                                    ];
+
+                                    //file validation: accept existing image files directly inside an allowed folder
+                                    $photoAvailable = $photoFile !== false
+                                        && is_file($photoFile)
+                                        && in_array(dirname($photoFile), $photoFolders, true)
+                                        && in_array(
+                                            strtolower(pathinfo($photoFile, PATHINFO_EXTENSION)),
+                                            ['jpg', 'jpeg', 'png'],
+                                            true
+                                        );
+                                    ?>
+
+                                    <?php if ($photoAvailable): ?>
+                                        <img
+                                            src="<?= escapeHtml($photoPath) ?>"
+                                            alt="<?= escapeHtml(
+                                                'Photo of ' . $patient['first_name'] . ' ' . $patient['last_name']
+                                            ) ?>"
+                                            width="80"
+                                            loading="lazy"
+                                        >
+                                    <?php else: ?>
+                                        <!--missing photo feedback: cover empty paths and unavailable image files-->
+                                        <span>No photo available</span>
+                                    <?php endif; ?>
+                                </td>
+
                                 <td>
                                     <a href="patient_edit.php?patient_id=<?= (int) $patient['patient_id'] ?>">
                                         Edit
