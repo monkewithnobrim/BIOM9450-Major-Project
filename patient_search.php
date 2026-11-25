@@ -88,7 +88,6 @@ if ($errorMessage === '') {
 
 ?>
 
-
 <!-- Task 2: This is the webpage for practitioners to browse, search and edit patient records-->
 <!doctype html>
 <html lang="en">
