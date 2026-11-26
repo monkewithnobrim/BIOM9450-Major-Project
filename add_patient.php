@@ -1,9 +1,11 @@
 <?php
 //start a session so the success message can survive the redirect
 session_start();
+date_default_timezone_set('Australia/Sydney');
 
 //load Nathan's database connection for saving patient records
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/validation.php';
 
 //read the success message once, then remove it from the session
 $successMessage = $_SESSION['patient_success'] ?? '';
@@ -28,7 +30,7 @@ if ($formSubmitted) {
         $value = $_POST[$name] ?? '';
 
         // Accept text and remove spaces from the beginning and end.
-        $fields[$name] = is_string($value) ? trim($value) : '';
+        $fields[$name] = is_string($value) ? clean($value) : '';
     }
 }
 
@@ -44,102 +46,39 @@ function escapeHtml(string $value): string
         'UTF-8'
     );
 }
-// Check that a date uses YYYY-MM-DD and exists on the calendar.
-function validPatientDate(string $value): bool
-{
-    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-
-    return $date !== false && $date->format('Y-m-d') === $value;
-}
-
 if ($formSubmitted) {
-    // First name is required and must fit Nathan's 40-character column.
-    if ($fields['first_name'] === '' ||
-        mb_strlen($fields['first_name'], 'UTF-8') > 40) {
-        $errors[] = 'First name must contain between 1 and 40 characters.';
-    }
-
-    // Last name is required and must fit Nathan's 40-character column.
-    if ($fields['last_name'] === '' ||
-        mb_strlen($fields['last_name'], 'UTF-8') > 40) {
-        $errors[] = 'Last name must contain between 1 and 40 characters.';
-    }
-
-    // Room is required and can contain letters and numbers.
-    if ($fields['room'] === '' ||
-        mb_strlen($fields['room'], 'UTF-8') > 10) {
-        $errors[] = 'Room must contain between 1 and 10 characters.';
-    }
-
-    // Accept only the gender values defined in Nathan's table.
-    $allowedGenders = ['F', 'M', 'Other'];
-
-    if (!in_array($fields['gender'], $allowedGenders, true)) {
-        $errors[] = 'Choose a valid gender.';
-    }
-
-    $birthDate = $fields['date_of_birth'];
-    $admissionDate = $fields['admission_date'];
-
-    $today = (new DateTimeImmutable(
-        'now',
-        new DateTimeZone('Australia/Sydney')
-    ))->format('Y-m-d');
-
-    $birthDateIsValid = validPatientDate($birthDate);
-    $admissionDateIsValid = validPatientDate($admissionDate);
-
-    // Date of birth must be a valid date between year 1000 and today.
-    if (!$birthDateIsValid ||
-        $birthDate < '1000-01-01' ||
-        $birthDate > $today) {
-        $errors[] = 'Enter a valid date of birth that is today or earlier.';
-    }
-
-    // Admission date must fit the database's DATE range.
-    if (!$admissionDateIsValid ||
-        $admissionDate < '1000-01-01') {
-        $errors[] = 'Enter a valid admission date.';
-    } elseif ($birthDateIsValid && $admissionDate < $birthDate) {
+    // validate patient details using the shared validation functions
+    $birthError = validate_date($fields['date_of_birth'], 'Date of birth');
+    $admissionError = validate_date($fields['admission_date'], 'Admission date', true);
+    $errors = array_values(array_filter([
+        validate_name($fields['first_name'], 'First name'),
+        validate_name($fields['last_name'], 'Last name'),
+        validate_room($fields['room']),
+        validate_in_list($fields['gender'], ['F', 'M', 'Other'], 'gender'),
+        $birthError,
+        $admissionError
+    ]));
+    // check the relationship between the two dates
+    if ($birthError === '' && $admissionError === '' &&
+        $fields['admission_date'] < $fields['date_of_birth']) {
         $errors[] = 'Admission date must be on or after the date of birth.';
     }
 }
-// Validate the optional patient photo before saving
-// Allow the photo to be left blank. If a file is selected, check that
-// the upload succeeded, it is no larger than 2 MB, and its contents
-// can be read as a JPEG or PNG image. Add any problems to $errors
-// If valid, store its extension in $photoExtension for the saving step
-// Start with no photo selected.
+
+// validate the optional photo using the shared function
 $photoExtension = null;
-
 if ($formSubmitted) {
-    // Read the upload result. A missing photo is allowed.
-    $photoError = $_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE;
-
-    if ($photoError !== UPLOAD_ERR_NO_FILE) {
-        if ($photoError !== UPLOAD_ERR_OK) {
-            $errors[] = 'The photo could not be uploaded. Please choose it again.';
-        } elseif ($_FILES['photo']['size'] > 2 * 1024 * 1024) {
-            $errors[] = 'The photo must be no larger than 2 MB.';
+    $photo = $_FILES['photo'] ?? null;
+    $photoValidation = validate_photo($photo);
+    if ($photoValidation !== '') {
+        $errors[] = $photoValidation;
+    } elseif ($photo !== null && $photo['error'] === UPLOAD_ERR_OK) {
+        // check that the file can be decoded as an image and determine its extension
+        $image = @getimagesize($photo['tmp_name']);
+        if ($image === false || !in_array($image['mime'], ['image/jpeg', 'image/png'], true)) {
+            $errors[] = 'The uploaded file could not be read as an image.';
         } else {
-            // Inspect the actual file contents.
-            $temporaryPhoto = $_FILES['photo']['tmp_name'];
-            $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-            $photoType = $fileInfo->file($temporaryPhoto);
-
-            // Match accepted image types to their filename extensions.
-            $allowedPhotoTypes = [
-                'image/jpeg' => 'jpg',
-                'image/png' => 'png',
-            ];
-
-            if (!isset($allowedPhotoTypes[$photoType])) {
-                $errors[] = 'The photo must be a JPEG or PNG image.';
-            } elseif (@getimagesize($temporaryPhoto) === false) {
-                $errors[] = 'The uploaded file could not be read as an image.';
-            } else {
-                $photoExtension = $allowedPhotoTypes[$photoType];
-            }
+            $photoExtension = $image['mime'] === 'image/jpeg' ? 'jpg' : 'png';
         }
     }
 }

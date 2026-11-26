@@ -1,9 +1,11 @@
 <?php
 //session setup: carry the success message across the redirect
 session_start();
+date_default_timezone_set('Australia/Sydney');
 
 //database connection: load existing MySQLi connection
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/validation.php';
 
 //success feedback: read the message once and remove it from the session
 $successMessage = $_SESSION['patient_edit_success'] ?? '';
@@ -70,14 +72,6 @@ function escapeHtml(string $value): string
     );
 }
 
-//DATE VALIDATION: check that a submitted date exists and uses YYYY-MM-DD
-function validPatientDate(string $value): bool
-{
-    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-
-    return $date !== false && $date->format('Y-m-d') === $value;
-}
-
 //edit validation setup: start with an empty list of field errors
 $errors = [];
 
@@ -99,58 +93,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
     //submitted values: replace displayed values with the practitioner's edits
     foreach ($editableFields as $name) {
         $value = $_POST[$name] ?? '';
-        $patient[$name] = is_string($value) ? trim($value) : '';
+        $patient[$name] = is_string($value) ? clean($value) : '';
     }
 
-    //NAME VALIDATION: require first and last names within the database limits
-    if ($patient['first_name'] === '' ||
-        mb_strlen($patient['first_name'], 'UTF-8') > 40) {
-        $errors[] = 'First name must contain between 1 and 40 characters.';
-    }
-
-    if ($patient['last_name'] === '' ||
-        mb_strlen($patient['last_name'], 'UTF-8') > 40) {
-        $errors[] = 'Last name must contain between 1 and 40 characters.';
-    }
-
-    //ROOM VALIDATION: require a room containing no more than 10 characters
-    if ($patient['room'] === '' ||
-        mb_strlen($patient['room'], 'UTF-8') > 10) {
-        $errors[] = 'Room must contain between 1 and 10 characters.';
-    }
-
-    //GENDER VALIDATION: accept only values supported by Nathan's database
-    $allowedGenders = ['F', 'M', 'Other'];
-
-    if (!in_array($patient['gender'], $allowedGenders, true)) {
-        $errors[] = 'Choose a valid gender.';
-    }
-
-    //date setup: read both dates and determine today's date in Sydney
-    $birthDate = $patient['date_of_birth'];
-    $admissionDate = $patient['admission_date'];
-
-    $today = (new DateTimeImmutable(
-        'now',
-        new DateTimeZone('Australia/Sydney')
-    ))->format('Y-m-d');
-
-    $birthDateIsValid = validPatientDate($birthDate);
-    $admissionDateIsValid = validPatientDate($admissionDate);
-
-    //DOB VALIDATION: require a supported date that is today or earlier
-    if (!$birthDateIsValid ||
-        $birthDate < '1000-01-01' ||
-        $birthDate > $today) {
-        $errors[] = 'Enter a valid date of birth that is today or earlier.';
-    }
-
-    //ADMISSION DATE VALIDATION: require a supported date on or after the birth date
-    if (!$admissionDateIsValid ||
-        $admissionDate < '1000-01-01') {
-        $errors[] = 'Enter a valid admission date.';
-    } elseif ($birthDateIsValid && $admissionDate < $birthDate) {
-        $errors[] = 'Admission date must be on or after the date of birth';
+    // validate patient details using the shared validation functions
+    $birthError = validate_date($patient['date_of_birth'], 'Date of birth');
+    $admissionError = validate_date($patient['admission_date'], 'Admission date', true);
+    $errors = array_values(array_filter([
+        validate_name($patient['first_name'], 'First name'),
+        validate_name($patient['last_name'], 'Last name'),
+        validate_room($patient['room']),
+        validate_in_list($patient['gender'], ['F', 'M', 'Other'], 'gender'),
+        $birthError,
+        $admissionError
+    ]));
+    // check the relationship between the two dates
+    if ($birthError === '' && $admissionError === '' &&
+        $patient['admission_date'] < $patient['date_of_birth']) {
+        $errors[] = 'Admission date must be on or after the date of birth.';
     }
 }
 

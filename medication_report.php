@@ -7,6 +7,7 @@ date_default_timezone_set('Australia/Sydney');
 
 // database connection: load the existing database connection
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/validation.php';
 
 // report setup: initialise variables
 $patients = [];
@@ -14,11 +15,15 @@ $reportRows = [];
 $groupedRecords = [];
 $errorMessage = '';
 $reportError = '';
-$emailMessages = [];
 
 // filter setup: capture the selected patient and reporting period
-$selectedPatient = $_GET['patient_id'] ?? '';
-$selectedPeriod = $_GET['report_period'] ?? '';
+$patientInput = $_GET['patient_id'] ?? '';
+$periodInput = $_GET['report_period'] ?? '';
+$selectedPatient = is_string($patientInput) ? clean($patientInput) : '';
+$selectedPeriod = is_string($periodInput) ? clean($periodInput) : '';
+if (!is_string($patientInput) || !is_string($periodInput)) {
+    $reportError = 'Please select valid report criteria.';
+}
 $startDate = '';
 $endDate = '';
 
@@ -76,8 +81,8 @@ if ($selectedPatient !== '') {
 
 // reporting period calculation: calculate the previous and upcoming weeks
 if ($selectedPeriod !== '') {
-    if (!in_array($selectedPeriod, ['previous_week', 'upcoming_week'], true)) {
-        $reportError = 'Please select a valid reporting period.';
+    if (($periodError = validate_in_list($selectedPeriod, ['previous_week', 'upcoming_week'], 'reporting period')) !== '') {
+        $reportError = $periodError;
     } else {
         // upcoming week: the demonstration data is fixed to start on Monday 30 November 2026
         $upcomingStart = new DateTime('2026-11-30');
@@ -125,8 +130,7 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
                     m.route,
                     o.dose,
                     o.round,
-                    pr.full_name AS practitioner_name,
-                    pr.email AS practitioner_email
+                    pr.full_name AS practitioner_name
                 FROM medication_administration a
                 INNER JOIN medication_order o ON a.order_id = o.order_id
                 INNER JOIN patient p ON o.patient_id = p.patient_id
@@ -181,67 +185,6 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
     }
 }
 
-// refusal notification: notify the facility director about refused doses
-if ($selectedPeriod === 'previous_week' && $reportError === '' && $errorMessage === '') {
-    try {
-        // director retrieval: retrieve the facility director email address
-        $directorResult = $conn->query(
-            "SELECT email FROM practitioner WHERE role = 'administrator' LIMIT 1"
-        );
-
-        $director = $directorResult->fetch_assoc();
-        $directorResult->free();
-
-        if ($director && filter_var($director['email'], FILTER_VALIDATE_EMAIL)) {
-            // notification tracking: initialise the session notification list
-            if (!isset($_SESSION['medication_refusal_notifications'])) {
-                $_SESSION['medication_refusal_notifications'] = [];
-            }
-
-            // refusal identification: check the report for refused doses
-            foreach ($reportRows as $record) {
-                if ($record['status'] === 'refused') {
-                    $notificationId = (string) $record['admin_id'];
-
-                    // notification check: skip records already successfully emailed
-                    if (!in_array($notificationId, $_SESSION['medication_refusal_notifications'], true)) {
-                        // email content: prepare the refused medication information
-                        $subject = 'Medication Refusal Notification';
-                        $body = "A medication dose has been refused\n\n";
-                        $body .= "Patient ID: " . $record['patient_id'] . "\n";
-                        $body .= "Patient Name: " . $record['first_name'] . ' ' . $record['last_name'] . "\n";
-                        $body .= "Medication: " . $record['medication_name'] . "\n";
-                        $body .= "Dose: " . $record['dose'] . "\n";
-                        $body .= "Scheduled Date: " . $record['scheduled_date'] . "\n";
-                        $body .= "Practitioner: " . ($record['practitioner_name'] ?? 'Not recorded') . "\n";
-                        $body .= "Notes: " . ($record['notes'] ?? 'No additional notes') . "\n";
-
-                        // email headers: specify the plain text email format
-                        $headers = "Content-Type: text/plain; charset=UTF-8";
-
-                        // email delivery: send the notification to the facility director
-                        $emailSent = mail($director['email'], $subject, $body, $headers);
-
-                        // notification tracking: record the notification after successful submission
-                        if ($emailSent) {
-                            $_SESSION['medication_refusal_notifications'][] = $notificationId;
-                            $emailMessages[] = 'Refusal notification submitted for patient ID ' . $record['patient_id'];
-                        } else {
-                            $emailMessages[] = 'Email delivery failed for patient ID ' . $record['patient_id'] . '. Check the PHP email configuration.';
-                        }
-                    }
-                }
-            }
-        } else {
-            $emailMessages[] = 'No valid facility director email address was found.';
-        }
-
-    } catch (mysqli_sql_exception $error) {
-        // notification error handling: log errors during notification processing
-        error_log('Medication refusal notification failed: ' . $error->getMessage());
-        $emailMessages[] = 'The refusal notification could not be processed.';
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -335,11 +278,6 @@ if ($selectedPeriod === 'previous_week' && $reportError === '' && $errorMessage 
         </p>
 
         <p><strong>Total Medication Records:</strong> <?php echo count($reportRows); ?></p>
-
-        <!-- refusal notification results: display the outcome of notification attempts -->
-        <?php foreach ($emailMessages as $message): ?>
-            <p><?php echo escapeHtml($message); ?></p>
-        <?php endforeach; ?>
 
         <!-- previous week report: display actual medication administration outcomes -->
         <?php if ($selectedPeriod === 'previous_week'): ?>

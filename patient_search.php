@@ -1,6 +1,7 @@
 <?php
 //database connection: load existing MySQLi connection
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/validation.php';
 
 //patient list setup: start with no records and no error message
 $patients = [];
@@ -8,7 +9,7 @@ $errorMessage = '';
 
 //search input: read the submitted search text and remove surrounding spaces
 $searchValue = $_GET['search'] ?? '';
-$search = is_string($searchValue) ? trim($searchValue) : '';
+$search = is_string($searchValue) ? clean($searchValue) : '';
 
 //search validation: reject incorrectly structured or overly long search values
 if (!is_string($searchValue) || mb_strlen($search, 'UTF-8') > 100) {

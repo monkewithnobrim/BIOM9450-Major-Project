@@ -24,7 +24,7 @@ function validate_name($value, $label, $max = 40) {
 // The first return that runs ends the function. If it returns '', the value is fine.
 function validate_date($value, $label, $allowFuture = false) {
     if ($value === '') return "$label is required.";        // 1. empty?
-    $d = DateTime::createFromFormat('Y-m-d', $value);       // 2. try to read it as YYYY-MM-DD
+    $d = DateTime::createFromFormat('!Y-m-d', $value);       // 2. try to read it as YYYY-MM-DD
     if (!$d || $d->format('Y-m-d') !== $value)              // 3. unreadable, or something like 2026-02-30?
         return "$label must be a real date (YYYY-MM-DD).";
     if (!$allowFuture && $d > new DateTime('today'))        // 4. in the future?
@@ -53,9 +53,11 @@ function validate_room($value) {
 // if one is sent it must upload without error, be 2 MB or smaller and really be a JPG
 // or PNG image. The type is read from the file's contents, not from its name.
 function validate_photo($file) {
+    if ($file !== null && (!is_array($file) || !isset($file['error']) || !is_int($file['error']))) return 'Invalid photo upload.';
     if (!isset($file) || $file['error'] === UPLOAD_ERR_NO_FILE) return '';   // photo is optional
     if ($file['error'] !== UPLOAD_ERR_OK)  return 'The photo could not be uploaded.';
     if ($file['size'] > 2 * 1024 * 1024)   return 'The photo must be 2 MB or smaller.';
+    if (!isset($file['tmp_name']) || !is_string($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) return 'Invalid photo upload.';
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
     if (!in_array($mime, ['image/jpeg', 'image/png'], true)) return 'The photo must be a JPG or PNG image.';
     return '';
