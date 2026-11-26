@@ -417,7 +417,7 @@ INSERT INTO `patient` (`patient_id`, `first_name`, `last_name`, `date_of_birth`,
 (10, 'Leonard', 'Fischer', '1935-02-11', 'M', 'B05', 'photos/p10.jpg', '2021-10-12'),
 (11, 'Ivy', 'Campbell', '1944-06-06', 'F', 'C01', 'photos/p11.jpg', '2025-02-01'),
 (12, 'Arthur', 'Mehta', '1938-10-29', 'M', 'C02', 'photos/p12.jpg', '2024-08-16'),
-(13, 'Nancy', 'O\'Brien', '1943-03-03', 'F', 'C03', 'photos/p13.jpg', '2025-04-20'),
+(13, 'Nancy', 'O'' Brien', '1943-03-03', 'F', 'C03', 'photos/p13.jpg', '2025-04-20'),
 (14, 'Ronald', 'Zhang', '1932-12-12', 'M', 'C04', 'photos/p14.jpg', '2020-11-08'),
 (15, 'Phyllis', 'Warren', '1945-07-21', 'F', 'C05', 'photos/p15.jpg', '2025-06-12');
 
