@@ -79,9 +79,8 @@ if ($selectedPeriod !== '') {
     if (!in_array($selectedPeriod, ['previous_week', 'upcoming_week'], true)) {
         $reportError = 'Please select a valid reporting period.';
     } else {
-        // upcoming week: find the next Monday
-        $upcomingStart = new DateTime('today');
-        $upcomingStart->modify('monday next week');
+        // upcoming week: the demonstration data is fixed to start on Monday 30 November 2026
+        $upcomingStart = new DateTime('2026-11-30');
 
         // previous week: calculate the Monday and Sunday before the upcoming week
         $previousStart = clone $upcomingStart;
