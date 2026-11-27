@@ -124,7 +124,7 @@ if ($errorMessage === '') {
         <p>Patient records loaded: <?= count($patients) ?></p>
     <?php endif; ?>
 
-    <!--navigation - open the patient entry form-->
+    <!--NAVIGATION: access other pages-->
     <p>
         <a class="button" href="add_patient.php">Add patient</a>
     </p>

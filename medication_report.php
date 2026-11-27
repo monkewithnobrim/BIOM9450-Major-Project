@@ -204,6 +204,13 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
     <!-- report heading: identify the purpose of the webpage -->
     <h1>Medication Report</h1>
 
+    <!--NAVIGATION: access other pages-->
+    <p>
+        <a href="add_patient.php">Add Patient</a> |
+        <a href="patient_search.php">Patient Search</a> |
+        <strong>Medication Report</strong>
+    </p>
+
     <!-- report filter section: allow users to select patients and reporting periods -->
     <h2>Select Report Criteria</h2>
 
