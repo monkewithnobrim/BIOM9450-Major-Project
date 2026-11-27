@@ -1,6 +1,7 @@
 <?php
-// start a session so the success message can survive the redirect
-session_start();
+require_once __DIR__ . '/auth.php';
+//start a session so the success message can survive the redirect
+
 date_default_timezone_set('Australia/Sydney');
 
 // load database connection for saving patient records
@@ -36,6 +37,7 @@ if ($formSubmitted) {
 
 // collect validation messages. This validates all six fields in PHP and will display any errors
 $errors = [];
+$patientID = null;
 
 // escape submitted text before displaying it inside HTML
 function escapeHtml(string $value): string
@@ -165,7 +167,7 @@ if ($formSubmitted && $errors === []) {
         $errors[] = 'The patient could not be saved. Please try again.';
     }
 
-    if ($errors === []) {
+    if ($errors === [] && $patientID !== null) {
         // store a confirmation message for the redirected page
         $_SESSION['patient_success'] =
             'Patient added successfully. Patient ID: ' . $patientID;
@@ -186,8 +188,12 @@ if ($formSubmitted && $errors === []) {
     <meta charset="utf-8">
     <!--this is the title shown in the browser tab-->
     <title>Add patient</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
-<body>
+<body class="patient-form-page">
+    <?php require __DIR__ . '/header.php'; ?>
+    <!-- CARECODE PAGE STYLING -->
     <h1>Add patient</h1>
 
     <!--NAVIGATION: access other pages-->
@@ -223,7 +229,8 @@ if ($formSubmitted && $errors === []) {
     <?php endif; ?>
     
     <!--start the patient entry form-->
-    <form method="post" enctype="multipart/form-data">
+    <form class="patient-form" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>">
 
         <!--first name: name must meet requirements of maximum 40 characters -->
         <!--value redisplays the submitted first name after a validation error-->
@@ -335,6 +342,8 @@ if ($formSubmitted && $errors === []) {
         <!--submit all the fields above-->
         <button type="submit">Add patient</button>
     </form>
+
+    <?php require __DIR__ . '/footer.php'; ?>
 </body>
 </html>
 
