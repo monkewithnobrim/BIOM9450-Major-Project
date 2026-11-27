@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/auth.php';
 // session setup: start the session for this page
-session_start();
+
 
 // timezone setup: use Sydney local time
 date_default_timezone_set('Australia/Sydney');
@@ -194,8 +195,11 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medication Report</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="report-page">
+    <?php require __DIR__ . '/header.php'; ?>
+    <!-- CARECODE PAGE STYLING -->
 
     <!-- report heading: identify the purpose of the webpage -->
     <h1>Medication Report</h1>
@@ -204,7 +208,7 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
     <h2>Select Report Criteria</h2>
 
     <?php if ($errorMessage !== ''): ?>
-        <p><?php echo escapeHtml($errorMessage); ?></p>
+        <p role="alert"><?php echo escapeHtml($errorMessage); ?></p>
     <?php else: ?>
         <form method="GET" action="medication_report.php">
             <!-- patient selection: allow users to select all patients or one patient -->
@@ -242,7 +246,7 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
 
     <!-- report error section: display errors encountered while generating the report -->
     <?php if ($reportError !== ''): ?>
-        <p><?php echo escapeHtml($reportError); ?></p>
+        <p role="alert"><?php echo escapeHtml($reportError); ?></p>
     <?php endif; ?>
 
     <!-- report results section: display the selected criteria and medication records -->
@@ -291,7 +295,8 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
                 <?php foreach ($groupedRecords as $practitionerName => $records): ?>
                     <h3>Practitioner: <?php echo escapeHtml($practitionerName); ?></h3>
 
-                    <table border="1" cellpadding="6">
+                    <div class="table-scroll">
+<table>
                         <thead>
                             <tr>
                                 <th>Patient ID</th>
@@ -320,13 +325,14 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
                                     <td><?php echo escapeHtml(ucfirst($record['round'])); ?></td>
                                     <td><?php echo escapeHtml(ucfirst($record['route'])); ?></td>
                                     <td><?php echo escapeHtml(formatReportDate($record['scheduled_date'])); ?></td>
-                                    <td><?php echo escapeHtml(ucwords($record['status'])); ?></td>
+                                    <td><span class="status <?= escapeHtml(str_replace(' ', '-', $record['status'])) ?>"><?php echo escapeHtml(ucwords($record['status'])); ?></span></td>
                                     <td><?php echo $record['administered_at'] !== null ? escapeHtml($record['administered_at']) : 'Not recorded'; ?></td>
                                     <td><?php echo $record['notes'] !== null ? escapeHtml($record['notes']) : '-'; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+</div>
                     <br>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -344,7 +350,8 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
                 <?php foreach ($groupedRecords as $practitionerName => $records): ?>
                     <h3>Practitioner: <?php echo escapeHtml($practitionerName); ?></h3>
 
-                    <table border="1" cellpadding="6">
+                    <div class="table-scroll">
+<table>
                         <thead>
                             <tr>
                                 <th>Patient ID</th>
@@ -372,17 +379,20 @@ if ($selectedPeriod !== '' && $reportError === '' && $errorMessage === '') {
                                     <td><?php echo escapeHtml(ucfirst($record['round'])); ?></td>
                                     <td><?php echo escapeHtml(ucfirst($record['route'])); ?></td>
                                     <td><?php echo escapeHtml(formatReportDate($record['scheduled_date'])); ?></td>
-                                    <td><?php echo escapeHtml(ucwords($record['status'])); ?></td>
+                                    <td><span class="status <?= escapeHtml(str_replace(' ', '-', $record['status'])) ?>"><?php echo escapeHtml(ucwords($record['status'])); ?></span></td>
                                     <td><?php echo $record['notes'] !== null ? escapeHtml($record['notes']) : '-'; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+</div>
                     <br>
                 <?php endforeach; ?>
             <?php endif; ?>
         <?php endif; ?>
     <?php endif; ?>
 
+
+    <?php require __DIR__ . '/footer.php'; ?>
 </body>
 </html>

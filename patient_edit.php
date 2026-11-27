@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/auth.php';
 //session setup: carry the success message across the redirect
-session_start();
+
 date_default_timezone_set('Australia/Sydney');
 
 //database connection: load existing MySQLi connection
@@ -177,8 +178,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
 
     <!--browser title: identify the patient editing page-->
     <title>Edit patient</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="patient-form-page">
+    <?php require __DIR__ . '/header.php'; ?>
+    <!-- CARECODE PAGE STYLING -->
     <!--page heading: identify the current task-->
     <h1>Edit patient</h1>
 
@@ -215,10 +219,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
         <?php endif; ?>
 
         <!--patient edit form: submit changes to this page while retaining the patient ID-->
-        <form
+        <form class="patient-form"
             action="patient_edit.php?patient_id=<?= (int) $patient['patient_id'] ?>"
             method="post"
         >
+        <input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>">
             <!--first name: display the current value and limit entry to 40 characters-->
             <p>
                 <label for="first_name">First name</label>
@@ -308,7 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
             <!--edit controls: submit changes or return to the patient list-->
             <button type="submit">Save changes</button>
             <!--cancel button: return to the patient list without submitting changes-->
-            <button
+            <button class="secondary"
                 type="button"
                 onclick="window.location.href='patient_search.php';"
             >
@@ -316,5 +321,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
             </button>
         </form>
     <?php endif; ?>
+
+    <?php require __DIR__ . '/footer.php'; ?>
 </body>
 </html>
