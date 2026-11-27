@@ -120,9 +120,11 @@ if ($errorMessage === '') {
         <p>Patient records loaded: <?= count($patients) ?></p>
     <?php endif; ?>
 
-    <!--navigation - open the patient entry form-->
+    <!--NAVIGATION: access other pages-->
     <p>
-        <a href="add_patient.php">Add patient</a>
+        <a href="add_patient.php">Add Patient</a> |
+        <strong>Patient Search</strong> |
+        <a href="medication_report.php">Medication Report</a>
     </p>
 
     <!--SEARCH PATIENT section: collect a name, patient ID or room to search for-->

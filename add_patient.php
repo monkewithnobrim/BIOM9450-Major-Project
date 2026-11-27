@@ -190,6 +190,13 @@ if ($formSubmitted && $errors === []) {
 <body>
     <h1>Add patient</h1>
 
+    <!--NAVIGATION: access other pages-->
+    <p>
+        <strong>Add Patient</strong> |
+        <a href="patient_search.php">Patient Search</a> |
+        <a href="medication_report.php">Medication Report</a>
+    </p>
+
     <!-- Display confirmation after a successful database save -->
     <?php if ($successMessage !== ''): ?>
         <p role="status">

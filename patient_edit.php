@@ -189,9 +189,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
         </p>
     <?php endif; ?>
 
-    <!--navigation: return to the patient list-->
+    <!--NAVIGATION: access other pages-->
     <p>
-        <a href="patient_search.php">Back to patient records</a>
+        <a href="add_patient.php">Add Patient</a> |
+        <a href="patient_search.php">Patient Search</a> |
+        <strong>Edit Patient</strong> |
+        <a href="medication_report.php">Medication Report</a>
     </p>
 
     <?php if ($errorMessage !== ''): ?>
