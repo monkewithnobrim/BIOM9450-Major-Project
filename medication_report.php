@@ -5,7 +5,7 @@ session_start();
 // timezone setup: use Sydney local time
 date_default_timezone_set('Australia/Sydney');
 
-// database connection: load the existing database connection
+//load database connection for saving patient records
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/validation.php';
 

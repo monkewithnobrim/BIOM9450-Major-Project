@@ -1,17 +1,17 @@
 <?php
-//start a session so the success message can survive the redirect
+// start a session so the success message can survive the redirect
 session_start();
 date_default_timezone_set('Australia/Sydney');
 
-//load Nathan's database connection for saving patient records
+// load database connection for saving patient records
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/validation.php';
 
-//read the success message once, then remove it from the session
+// read the success message once, then remove it from the session
 $successMessage = $_SESSION['patient_success'] ?? '';
 unset($_SESSION['patient_success']);
 
-//start with empty values when the page first opens
+// start with empty values when the page first opens
 $fields = [
     'first_name' => '',
     'last_name' => '',
@@ -21,23 +21,23 @@ $fields = [
     'admission_date' => '',
 ];
 
-// Track whether the practitioner submitted the form.
+// track whether the practitioner submitted the form
 $formSubmitted = $_SERVER['REQUEST_METHOD'] === 'POST';
 
-// Read all six fields when the form is submitted.
+// read all six fields when the form is submitted
 if ($formSubmitted) {
     foreach (array_keys($fields) as $name) {
         $value = $_POST[$name] ?? '';
 
-        // Accept text and remove spaces from the beginning and end.
+        //accept text and remove spaces from the beginning and end
         $fields[$name] = is_string($value) ? clean($value) : '';
     }
 }
 
-// Collect validation messages. This validates all six fields in PHP and will display any errors
+// collect validation messages. This validates all six fields in PHP and will display any errors
 $errors = [];
 
-// Escape submitted text before displaying it inside HTML.
+// escape submitted text before displaying it inside HTML
 function escapeHtml(string $value): string
 {
     return htmlspecialchars(
@@ -83,35 +83,35 @@ if ($formSubmitted) {
     }
 }
 
-// Save the patient only after the form passes every validation check.
+// save the patient only after the form passes every validation check
 if ($formSubmitted && $errors === []) {
-    // Use NULL in the database when no photo was selected.
+    // Use NULL in the database when no photo was selected
     $photoPath = null;
     $savedPhoto = null;
 
     try {
-        // Save a photo only when the upload validation accepted one.
+        // save a photo only when the upload validation accepted one
         if ($photoExtension !== null) {
-            // Use the patient_photos folder created beforehand.
+            // use the patient_photos folder created beforehand
             $photoDirectory = __DIR__ . '/patient_photos';
 
-            // Stop the save if the folder is missing.
+            // stop the save if the folder is missing
             if (!is_dir($photoDirectory)) {
                 throw new RuntimeException(
                     'The patient_photos folder is missing.'
                 );
             }
 
-            // Generate a random filename with the validated extension.
+            // generate a random filename with the validated extension
             $filename = bin2hex(random_bytes(16)) . '.' . $photoExtension;
 
-            // Save the relative path in the patient table.
+            // save the relative path in the patient table
             $photoPath = 'patient_photos/' . $filename;
 
-            // Build the full destination path for moving the file.
+            // build the full destination path for moving the file
             $destination = $photoDirectory . '/' . $filename;
 
-            // Move the uploaded file out of PHP's temporary folder.
+            // move the uploaded file out of PHP's temporary folder
             if (!@move_uploaded_file(
                 $_FILES['photo']['tmp_name'],
                 $destination
@@ -121,11 +121,11 @@ if ($formSubmitted && $errors === []) {
                 );
             }
 
-            // Remember the saved file in case the database insert fails.
+            // remember the saved file in case the database insert fails
             $savedPhoto = $destination;
         }
 
-        // Insert the values into Nathan's existing patient table.
+        // insert the values into existing patient table
         $sql = 'INSERT INTO patient
                     (first_name, last_name, date_of_birth, gender,
                      room, photo_path, admission_date)
@@ -133,7 +133,7 @@ if ($formSubmitted && $errors === []) {
 
         $statement = $conn->prepare($sql);
 
-        // Supply the seven values separately from the SQL statement.
+        // supply the seven values separately from the SQL statement
         $statement->bind_param(
             'sssssss',
             $fields['first_name'],
@@ -145,32 +145,32 @@ if ($formSubmitted && $errors === []) {
             $fields['admission_date']
         );
 
-        // Run the insert and get MySQL's automatically generated patient ID.
+        // run the insert and get MySQL's automatically generated patient ID
         $statement->execute();
         $patientID = $conn->insert_id;
         $statement->close();
 
     } catch (mysqli_sql_exception | RuntimeException $error) {
-        // Remove the uploaded photo if the patient could not be inserted.
+        // remove the uploaded photo if the patient could not be inserted
         if ($savedPhoto !== null && is_file($savedPhoto)) {
             if (!@unlink($savedPhoto)) {
                 error_log('Could not remove patient photo: ' . $savedPhoto);
             }
         }
 
-        // Record the technical error for troubleshooting.
+        // record the technical error for troubleshooting
         error_log('Patient insert failed: ' . $error->getMessage());
 
-        // Display feedback and retain the entered patient details.
+        // display feedback and retain the entered patient details
         $errors[] = 'The patient could not be saved. Please try again.';
     }
 
     if ($errors === []) {
-        // Store a confirmation message for the redirected page.
+        // store a confirmation message for the redirected page
         $_SESSION['patient_success'] =
             'Patient added successfully. Patient ID: ' . $patientID;
 
-        // Open a fresh form after saving to avoid resubmitting on refresh.
+        // ppen a fresh form after saving to avoid resubmitting on refresh
         header('Location: add_patient.php', true, 303);
         exit;
     }

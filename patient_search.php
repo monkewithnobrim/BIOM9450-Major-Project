@@ -1,5 +1,5 @@
 <?php
-//database connection: load existing MySQLi connection
+//load database connection for saving patient records
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/validation.php';
 
