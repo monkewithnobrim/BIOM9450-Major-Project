@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/auth.php';
 //database connection: load existing MySQLi connection
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/validation.php';
@@ -101,8 +102,11 @@ if ($errorMessage === '') {
 
     <!--set the browser tab title-->
     <title>Patient records</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="patient-list-page">
+    <?php require __DIR__ . '/header.php'; ?>
+    <!-- CARECODE PAGE STYLING -->
     <!--page heading-->
     <h1>Patient records</h1>
 
@@ -122,9 +126,7 @@ if ($errorMessage === '') {
 
     <!--NAVIGATION: access other pages-->
     <p>
-        <a href="add_patient.php">Add Patient</a> |
-        <strong>Patient Search</strong> |
-        <a href="medication_report.php">Medication Report</a>
+        <a class="button" href="add_patient.php">Add patient</a>
     </p>
 
     <!--SEARCH PATIENT section: collect a name, patient ID or room to search for-->
@@ -147,7 +149,7 @@ if ($errorMessage === '') {
 
             <!--search controls: submit the search or clear it and reload all patients-->
             <button type="submit">Search</button>
-            <button
+            <button class="secondary"
                 type="button"
                 onclick="window.location.href='patient_search.php';"
             >
@@ -172,7 +174,8 @@ if ($errorMessage === '') {
 
             <?php else: ?>
                 <!--patient table: display one row for each patient-->
-                <table>
+                <div class="table-scroll">
+<table>
                     <caption>Patients listed alphabetically by last name</caption>
 
                     <!--table headings: identify the information in each column-->
@@ -246,7 +249,7 @@ if ($errorMessage === '') {
                                 </td>
 
                                 <td>
-                                    <a href="patient_edit.php?patient_id=<?= (int) $patient['patient_id'] ?>">
+                                    <a class="button secondary small-button" href="patient_edit.php?patient_id=<?= (int) $patient['patient_id'] ?>">
                                         Edit
                                     </a>
                                 </td>
@@ -254,9 +257,12 @@ if ($errorMessage === '') {
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+</div>
             <?php endif; ?>
         <?php endif; ?>
     </section>
 
+
+    <?php require __DIR__ . '/footer.php'; ?>
 </body>
 </html>

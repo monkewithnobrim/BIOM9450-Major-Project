@@ -1,0 +1,5 @@
+config_local.php
+.DS_Store
+__MACOSX/
+.env
+.env.*
