@@ -94,13 +94,13 @@ if ($formSubmitted && $errors === []) {
     try {
         // save a photo only when the upload validation accepted one
         if ($photoExtension !== null) {
-            // use the patient_photos folder created beforehand
-            $photoDirectory = __DIR__ . '/patient_photos';
+            // use the existing photos folder
+            $photoDirectory = __DIR__ . '/photos';
 
             // stop the save if the folder is missing
             if (!is_dir($photoDirectory)) {
                 throw new RuntimeException(
-                    'The patient_photos folder is missing.'
+                    'The photos folder is missing.'
                 );
             }
 
@@ -108,7 +108,7 @@ if ($formSubmitted && $errors === []) {
             $filename = bin2hex(random_bytes(16)) . '.' . $photoExtension;
 
             // save the relative path in the patient table
-            $photoPath = 'patient_photos/' . $filename;
+            $photoPath = 'photos/' . $filename;
 
             // build the full destination path for moving the file
             $destination = $photoDirectory . '/' . $filename;
@@ -195,13 +195,6 @@ if ($formSubmitted && $errors === []) {
     <?php require __DIR__ . '/header.php'; ?>
     <!-- CARECODE PAGE STYLING -->
     <h1>Add patient</h1>
-
-    <!--NAVIGATION: access other pages-->
-    <p>
-        <strong>Add Patient</strong> |
-        <a href="patient_search.php">Patient Search</a> |
-        <a href="medication_report.php">Medication Report</a>
-    </p>
 
     <!-- Display confirmation after a successful database save -->
     <?php if ($successMessage !== ''): ?>

@@ -193,14 +193,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
         </p>
     <?php endif; ?>
 
-    <!--NAVIGATION: access other pages-->
-    <p>
-        <a href="add_patient.php">Add Patient</a> |
-        <a href="patient_search.php">Patient Search</a> |
-        <strong>Edit Patient</strong> |
-        <a href="medication_report.php">Medication Report</a>
-    </p>
-
     <?php if ($errorMessage !== ''): ?>
         <!--selection feedback: explain when the patient ID is invalid-->
         <p role="alert"><?= escapeHtml($errorMessage) ?></p>
