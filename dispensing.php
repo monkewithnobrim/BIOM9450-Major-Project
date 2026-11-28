@@ -63,7 +63,7 @@ if (!$error) {
         $stmt->close();
 
         $photoPath = $patient['photo_path'] ?? '';
-        if (preg_match('~^(photos|patient_photos)/[A-Za-z0-9_.-]+\.(jpg|jpeg|png)$~i', $photoPath)) {
+        if (preg_match('~^photos/[A-Za-z0-9_.-]+\.(jpg|jpeg|png)$~i', $photoPath)) {
             $photoFile = realpath(__DIR__ . '/' . $photoPath);
             $photoFolder = realpath(__DIR__ . '/' . dirname($photoPath));
             $photoAvailable = $photoFile !== false &&

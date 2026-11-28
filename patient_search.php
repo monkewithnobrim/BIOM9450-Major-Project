@@ -125,11 +125,6 @@ if ($errorMessage === '') {
         <p>Patient records loaded: <?= count($patients) ?></p>
     <?php endif; ?>
 
-    <!--NAVIGATION: access other pages-->
-    <p>
-        <a class="button" href="add_patient.php">Add patient</a>
-    </p>
-
     <!--SEARCH PATIENT section: collect a name, patient ID or room to search for-->
     <section aria-labelledby="patient-search-heading">
         <h2 id="patient-search-heading">Search patients</h2>
@@ -220,7 +215,6 @@ if ($errorMessage === '') {
                                     //allowed folders: support preloaded photos and photos uploaded through the form
                                     $photoFolders = [
                                         realpath(__DIR__ . '/photos'),
-                                        realpath(__DIR__ . '/patient_photos'),
                                     ];
 
                                     //file validation: accept existing image files directly inside an allowed folder
